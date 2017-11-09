@@ -79,3 +79,38 @@ read.csv(file = "learning2014.csv")
 head(learning2014)
 str(learning2014)
 
+#data analysis starts from here
+
+str(learning2014)
+dim(learning2014)
+
+install.packages("ggplot2")
+
+library(ggplot2)
+
+install.packages("GGally")
+
+library(GGally)
+
+p <- ggpairs(learning2014, mapping = aes(col = gender), lower = list(combo = wrap("facethist", bins = 20)))
+
+p
+
+#multiple linear model (points ~ attitude, stra, surf)
+my_model2 <- lm(points ~ attitude + stra + surf, data = learning2014)
+
+summary(my_model2)
+
+#delete surf (not significant)
+my_model3 <- lm(points ~ attitude + stra, data = learning2014)
+
+summary(my_model3)
+
+#simple linear model (attitude is the only statistically significant variable...)
+my_model <- lm(points ~ attitude, data = learning2014)
+
+#print scatterplot with fitted regression
+qplot(attitude, points, data = learning2014) + geom_smooth(method = "lm")
+
+
+
