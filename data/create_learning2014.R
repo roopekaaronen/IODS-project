@@ -109,8 +109,17 @@ summary(my_model3)
 #simple linear model (attitude is the only statistically significant variable...)
 my_model <- lm(points ~ attitude, data = learning2014)
 
-#print scatterplot with fitted regression
+#print scatterplot with fitted regression (attitude)
 qplot(attitude, points, data = learning2014) + geom_smooth(method = "lm")
 
+summary(my_model)
 
+# **Note to self**: attitude is on scale 0-50! Other variables are 1-5.
+head(learning2014$attitude)
+head(learning2014$stra)
 
+#Checking the assumptions of my_model (diagnostics)
+
+par(mfrow = c(2,2))
+
+plot(my_model, which = c(1, 2, 5))
