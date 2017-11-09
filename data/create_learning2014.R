@@ -79,6 +79,9 @@ read.csv(file = "learning2014.csv")
 head(learning2014)
 str(learning2014)
 
+
+
+
 #DATA ANALYSIS starts from here (ignore)
 
 str(learning2014)
@@ -96,11 +99,15 @@ p <- ggpairs(learning2014, mapping = aes(col = gender), lower = list(combo = wra
 
 p
 
+range(learning2014$attitude)
+mean(learning2014$age)
+
+min(learning2014$points)
 
 #multiple linear model (points ~ attitude, stra, surf)
-my_model2 <- lm(points ~ attitude + stra + surf, data = learning2014)
+multiple_model <- lm(points ~ attitude + stra + surf, data = learning2014)
 
-summary(my_model2)
+summary(multiple_model)
 
 #delete surf (not significant)
 my_model3 <- lm(points ~ attitude + stra, data = learning2014)
