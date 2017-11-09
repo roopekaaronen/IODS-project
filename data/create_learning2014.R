@@ -79,7 +79,7 @@ read.csv(file = "learning2014.csv")
 head(learning2014)
 str(learning2014)
 
-#data analysis starts from here
+#DATA ANALYSIS starts from here (ignore)
 
 str(learning2014)
 dim(learning2014)
@@ -95,6 +95,7 @@ library(GGally)
 p <- ggpairs(learning2014, mapping = aes(col = gender), lower = list(combo = wrap("facethist", bins = 20)))
 
 p
+
 
 #multiple linear model (points ~ attitude, stra, surf)
 my_model2 <- lm(points ~ attitude + stra + surf, data = learning2014)
