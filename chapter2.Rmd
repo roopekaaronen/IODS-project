@@ -8,13 +8,17 @@ This week I did some data wrangling (*whew*) on the JYTOPKYS2 dataset and subseq
 
 I inspected the structure and dimensions of the learning2014 dataset I created in the data wrangling process.
 
+```{r }
 str(learning2014)
+
 dim(learning2014)
+```
 
 The data had 166 observations and 7 variables. The variables are: gender (of student), age (of student), attitude (general attitude towards statistics), deep (deep learning strategies), stra (strategic learning strategies), surf (surface learning strategies) and points (score of statistics course).
 
 Next I commenced with installing necessary R packages and accessing them:
 
+```{r }
 install.packages("ggplot2")
 
 library(ggplot2)
@@ -22,16 +26,17 @@ library(ggplot2)
 install.packages("GGally")
 
 library(GGally)
+```
 
 *Step 2:*
 
 Next I drew a scatterplot matrix to explore a graphical overview of the data:
 
+```{r }
 p <- ggpairs(learning2014, mapping = aes(col = gender), lower = list(combo = wrap("facethist", bins = 20)))
 
 p
-
-![**Scatterplot matrix**](C:\Users\RoopeOK\Documents\GitHub\IODS-project\Exercise2Matrix.png)
+```
 
 
 
@@ -47,13 +52,15 @@ Points: (When greater than zero) points averaged (mean) at 22.7, with the lowest
 
 Next I fit three variables (attitudes, deep and surf) to a multiple linear regression model:
 
+```{r }
 multiple_model <- lm(points ~ attitude + stra + surf, data = learning2014)
 
 multiple_model
+```
 
 Here is a summary for this analysis:  
 
-With the other variables constant, as attitudes increase with one (on a scale 0-5) points increase by ~3.4 (regression coefficient is 3.39). This is a highly significant relation (p < 0.001). The other variables (stra and surf) were not statistically significant (with respective p.values of 0.12 and 0.46 and regression coefficients of 0.85 and -0.57).
+With the other variables constant, as attitudes increase with one (on a scale 0-5) points increase by ~3.4 (regression coefficient is 3.395). This is a highly significant relation (p < 0.001). The other variables (stra and surf) were not statistically significant (with respective p.values of 0.12 and 0.46 and regression coefficients of 0.85 and -0.57).
 
 Multiple R-squared is 0.21. This implies that our model explains 21 % of the variance in points.
 
@@ -61,15 +68,17 @@ Multiple R-squared is 0.21. This implies that our model explains 21 % of the var
 
 Since stra and surf were not significant, I chose to delete them form my model. This left me with a (nice) simple regression model with points as the dependent variable and attitude as the independent/explanatory variable:
 
-![**Simple Regression (Note: Scale of attitude here is 0-50, I was too lasy to fix it :)**](C:\Users\RoopeOK\Documents\GitHub\IODS-project\Exercise2Regression.png)
+**Simple Regression (Note: Scale of attitude here is 0-50, I was too lasy to fix it :)**
 
 The code for this was:
 
+```{r }
 my_model <- lm(points ~ attitude, data = learning2014)
 
 qplot(attitude, points, data = learning2014) + geom_smooth(method = "lm")
 
 summary(my_model)
+```
 
 The regression coefficient rose to 0.35. p > 0.001, which means that the effect of attitude on points is very significant. Multiple R-squared is 0.19, implying that the variable attitude alone accounts for 19 % of the variance in student scores. F-statistic is 14.13 with 162 degrees of freedom.
 
@@ -82,13 +91,13 @@ This is the coolest thing I've done with R so far, so I'm quite happy. Yay!
 
 Moving towards diagnostics (shouldn't these be done *before* the regression analysis? Anyways...), I drew three plots:
 
+```{r }
 par(mfrow = c(2,2))
 
 plot(my_model, which = c(1, 2, 5))
+```
 
 Resulting in the following diagnostics:
-
-![**Diagnostics of Simple Linear Model**](C:\Users\RoopeOK\Documents\GitHub\IODS-project\Assumptions.png)
 
 We use the QQ plot here to evaluate how well the distribution of errors in our dataset matches a standard normal distribution. The Q-Q plot above suggests that our dataset indeed is normally distributed. Only very slight symptoms of kurtosis and skew are shown. The Residuals vs Fitted plot is nicely evenly distributed with no significant patterns standing out, suggesting that the assumption of constant variance of errors is reasonable. Although we have some outlier cases (data points 145, 56 and 35), according to our Residuals vs Leverage plot these don't have high leverage on our dataset, since the leverage values are relatively low. Conclusively, it's safe to say that our model fulfils the assumptions required for a linear regression analysis (i.e. our findings are reliable).
 
