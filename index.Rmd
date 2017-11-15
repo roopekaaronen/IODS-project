@@ -1,6 +1,6 @@
 ---
 title: "IODS course project"
-author: "Roope Kaaronen"
+author: "Roope O. Kaaronen"
 output:
   html_document:
     theme: cosmo
