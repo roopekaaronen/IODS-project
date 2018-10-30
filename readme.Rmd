@@ -1,5 +1,11 @@
-## Roope's Repository
+---
+title: "Untitled"
+author: "RK"
+date: "30 October 2018"
+output: html_document
+---
 
-Welcome to my repository.
+## R Markdown
 
-Find my course diary at <https://roopekaaronen.github.io/IODS-project/>
+**Hello**. This is my IODS website. I like turtles.
+<https://roopekaaronen.github.io/IODS-project/>

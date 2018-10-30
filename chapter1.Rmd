@@ -2,7 +2,7 @@
 ## **Roope's Project**
 
 
-**Hello world!** Welcome to my Open Data course page.
+**Hello world!** Welcome to my Open Data course page. I like turtles.
 
 *My repository link:* 
 
