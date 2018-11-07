@@ -63,19 +63,40 @@ colnames(learning2014)
 learning2014 <- filter(learning2014, points > 0)
 str(learning2014)
 
-write.csv(learning2014)
+write.csv(learning2014, file = "learning2014.csv")
+
+#Reading learning2014.csv
+
+read.csv(file = "learning2014.csv")
 
 # ~~~~~~~~~ DATA WRANGLING OVER ~~~~~~~~
+# DATA ANALYSIS:
+
+str(learning2014)
+dim(learning2014)
+
+# Learning2014 has 166 rows and 7 columns. Like it should. Yay.
 
 
 # Access the gglot2 library
 library(ggplot2)
 
+# Graphical overview of the data
+# Strongest correlations are between points and attitude.
+
+p <- ggpairs(learning2014, mapping = aes(col = gender), lower = list(combo = wrap("facethist", bins = 20)))
+
+p
+
+
 # plot attitude vs points
-p1 <- ggplot(learning2014, aes(x = attitude, y = points)) +
+p1 <- ggplot(learning2014, aes(x = attitude, y = points, col = gender)) +
   geom_point() +
   geom_smooth(method = "lm") +
   ggtitle("Student's attitude versus exam points")
 # print the plot
 p1
 
+install.packages("GGally")
+
+library(GGally)

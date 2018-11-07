@@ -126,8 +126,9 @@ Stra: Strategic learning has a nice normal distribution, but correlations with t
 Surf: Surface learning correlates very weakly with the other variables (nothing significant here) except for deep learning (See above).  
 Points: (When greater than zero) points averaged (mean) at 22.7, with the lowest score being 7 and the highest 33. The points distribution is negatively skewed. The distribution peaks around it's mean, but also has a smaller peak around very high scores (around 30 points). Points have a moderate correlation with the attitude varialbe (r = 0.437).
 
+*Step 3:*
 
-Then I did a multiple regression model. 
+Then I did a multiple regression model; lets see how attitude, stra and surf affect points. 
 
 ```{r regression, include=TRUE, echo=FALSE}
 
@@ -156,10 +157,13 @@ single_model <- lm(points ~ attitude, data = learning2014)
 summary(single_model)
 ```
 
+*Step 4:*
+
 The effect of attitude on points is highly significant. Multiple R-squared is 0.19, implying that the variable attitude alone accounts for 19 % of the variance in student scores. F-statistic is 14.13 with 162 degrees of freedom.
 
 Of course... What this does NOT imply is that attitudes cause high scores. There might be a third variable lurking behind attitudes towards statistics, such as general intelligence :-)
 
+*Step 5:*
 And then for some diagnostics:
 
 
