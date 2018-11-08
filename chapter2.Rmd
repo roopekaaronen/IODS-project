@@ -8,6 +8,12 @@ output: html_document
 ```{r data wrangling, include=FALSE}
 # DATA WRANGLING
 library(dplyr)
+
+# Access the gglot2 library
+library(ggplot2)
+
+library(GGally)
+
 dat <- read.table("http://www.helsinki.fi/~kvehkala/JYTmooc/JYTOPKYS3-data.txt", header = TRUE, sep = "\t")
 
 str(dat)
@@ -93,7 +99,7 @@ The data had 166 observations and 7 variables. The variables are: gender (of stu
 
 *Step 2:*
 
-Next I drew a scatterplot matrix to explore a graphical overview of the data:
+Next I drew made some descriptive tables and a scatterplot matrix to explore a (graphical) overview of the data:
 
 ```{r data analysis, include=TRUE, echo=FALSE}
 # DATA ANALYSIS:
@@ -103,16 +109,10 @@ dim(learning2014)
 
 # Learning2014 has 166 rows and 7 columns. Like it should. Yay.
 
-
-# Access the gglot2 library
-library(ggplot2)
-
-library(GGally)
-
 # Graphical overview of the data
 # Strongest correlations are between points and attitude.
 
-p <- ggpairs(learning2014, mapping = aes(col = gender), lower = list(combo = wrap("facethist", bins = 20)))
+p <- ggpairs(learning2014, mapping = aes(col = gender, alpha = 0.3), lower = list(combo = wrap("facethist", bins = 20)))
 
 p
 
