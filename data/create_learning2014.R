@@ -1,15 +1,22 @@
-#Roope Kaaronen, 9.11., Data Wrangling Exercise
+# ROOPE KAARONEN 8.11.2018
 
-install.packages("dplyr")
-
+# DATA WRANGLING
 library(dplyr)
 
-lrn14 <- read.table("http://www.helsinki.fi/~kvehkala/JYTmooc/JYTOPKYS3-data.txt", sep="\t", header=TRUE)
+# Access the gglot2 library
+library(ggplot2)
 
-str(lrn14)
-dim(lrn14)
+library(GGally)
 
-#The data has 183 rows and 60 columns (variables)
+dat <- read.table("http://www.helsinki.fi/~kvehkala/JYTmooc/JYTOPKYS3-data.txt", header = TRUE, sep = "\t")
+
+str(dat)
+dim(dat)
+View(dat)
+
+## The table has 183 rows and 60 columns.
+
+dat$attitude <- dat$Attitude / 10
 
 #Create an analysis dataset with the variables gender, age, attitude, deep, stra, surf and points
 
@@ -23,111 +30,56 @@ strategic_questions <- c("ST01","ST09","ST17","ST25","ST04","ST12","ST20","ST28"
 
 # select the columns related to deep learning and create column 'deep' by averaging
 
-deep_columns <- select(lrn14, one_of(deep_questions))
+deep_columns <- select(dat, one_of(deep_questions))
 
-lrn14$deep <- rowMeans(deep_columns)
+dat$deep <- rowMeans(deep_columns)
 
 # select the columns related to surface learning and create column 'surf' by averaging
 
-surface_columns <- select(lrn14, one_of(surface_questions))
+surface_columns <- select(dat, one_of(surface_questions))
 
-lrn14$surf <- rowMeans(surface_columns)
+dat$surf <- rowMeans(surface_columns)
 
 # select the columns related to strategic learning and create column 'stra' by averaging
 
-strategic_columns <- select(lrn14, one_of(strategic_questions))
+strategic_columns <- select(dat, one_of(strategic_questions))
 
-lrn14$stra <- rowMeans(strategic_columns)
+dat$stra <- rowMeans(strategic_columns)
 
 # choose a handful of columns to keep
 
-keep_columns <- c("gender", "Age", "Attitude", "deep", "stra", "surf", "Points")
+keep_columns <- c("gender", "Age", "attitude", "deep", "stra", "surf", "Points")
 
 # select the 'keep_columns' to create a new dataset
 
-learning2014 <- select(lrn14, one_of(keep_columns))
+learning2014 <- select(dat, one_of(keep_columns))
 
 # see the structure of the new dataset
 
 str(learning2014)
 
-# print out the column names of the data
-colnames(learning2014)
+# change some column names
 
-# change the name of the second column
 colnames(learning2014)[2] <- "age"
 
-# change the name of "Points" to "points"
 colnames(learning2014)[7] <- "points"
-
-colnames(learning2014)[3] <- "attitude"
 
 colnames(learning2014)
 
 # select rows where points is greater than zero
-
 learning2014 <- filter(learning2014, points > 0)
+str(learning2014)
 
-dim(learning2014)
+# create dataset
 
+# set working directory
+setwd("C:/Users/RoopeOK/Documents/Yliopisto/IODS-project")
+
+# write csv
 write.csv(learning2014, file = "learning2014.csv")
 
 #Reading learning2014.csv
 
 read.csv(file = "learning2014.csv")
 
-head(learning2014)
-str(learning2014)
-
-
-
-
-#DATA ANALYSIS starts from here (ignore)
-
-str(learning2014)
-dim(learning2014)
-
-install.packages("ggplot2")
-
-library(ggplot2)
-
-install.packages("GGally")
-
-library(GGally)
-
-p <- ggpairs(learning2014, mapping = aes(col = gender), lower = list(combo = wrap("facethist", bins = 20)))
-
-p
-
-range(learning2014$attitude)
-mean(learning2014$age)
-
-min(learning2014$points)
-
-#multiple linear model (points ~ attitude, stra, surf)
-multiple_model <- lm(points ~ attitude + stra + surf, data = learning2014)
-
-summary(multiple_model)
-
-#delete surf (not significant)
-my_model3 <- lm(points ~ attitude + stra, data = learning2014)
-
-summary(my_model3)
-
-#simple linear model (attitude is the only statistically significant variable...)
-my_model <- lm(points ~ attitude, data = learning2014)
-
-#print scatterplot with fitted regression (attitude)
-qplot(attitude, points, data = learning2014) + geom_smooth(method = "lm")
-
-summary(my_model)
-
-# **Note to self**: attitude is on scale 0-50! Other variables are 1-5.
-head(learning2014$attitude)
-head(learning2014$stra)
-
-#Checking the assumptions of my_model (diagnostics)
-
-par(mfrow = c(2,2))
-
-plot(my_model, which = c(1, 2, 5))
+# ~~~~~~~~~ DATA WRANGLING OVER ~~~~~~~~

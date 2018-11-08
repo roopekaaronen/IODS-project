@@ -5,7 +5,7 @@ date: "7 November 2018"
 output: html_document
 ---
 
-```{r data wrangling, include=FALSE}
+```{r data wrangling, include=FALSE, echo=FALSE}
 # DATA WRANGLING
 library(dplyr)
 
@@ -76,6 +76,12 @@ colnames(learning2014)
 learning2014 <- filter(learning2014, points > 0)
 str(learning2014)
 
+# create dataset
+
+# set working directory
+setwd("C:/Users/RoopeOK/Documents/Yliopisto/IODS-project")
+
+# write csv
 write.csv(learning2014, file = "learning2014.csv")
 
 #Reading learning2014.csv
