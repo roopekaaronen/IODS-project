@@ -1,0 +1,76 @@
+---
+title: "chapter3"
+author: "RK"
+date: "13 November 2018"
+output: html_document
+---
+
+## Chapter 3
+
+The variables 1-32 in alc.csv are listed below. The original dataset describes student achievement in secondary education of two Portuguese schools.
+
+```{r setup, include=F, echo = FALSE}
+library(dplyr)
+library(ggplot2)
+```
+
+```{r variables, include=TRUE, echo = FALSE}
+
+dat <- read.csv("alc.csv")
+colnames(dat)
+
+
+```
+
+My hypotheses are that
+
+1. `failures` increase the odds for high use of alcohol
+2. `absences` increase the odds for high use of alcohol
+3. `sexM` (being male) increase the odds for high use of alcohol
+4. `age` (aging) increases the odds for high use of alcohol
+
+Let's graphically explore these variables in relation to `high_use`.
+
+```{r exploration, include=TRUE, echo = FALSE}
+
+# # initialise and draw a boxplot of high_use and failures
+g2 <- ggplot(dat, aes(x = high_use, y = failures, col = sex))
+g2 + geom_boxplot(alpha = 0.5) + ggtitle("Student failures by alcohol consumption and sex")
+
+dat %>% group_by(sex, high_use) %>% summarise(count = n(), mean_failures = mean(failures))
+
+
+# initialise and draw a boxplot of high_use and absences
+g1 <- ggplot(dat, aes(x = high_use, y = absences, col = sex))
+g1 + geom_boxplot() + ggtitle("Student absences by alcohol consumption and sex")
+
+
+# # initialise and draw a boxplot of high_use and age
+g3 <- ggplot(dat, aes(x = high_use, y = age, col = sex))
+g3 + geom_boxplot() + ggtitle("Student age by alcohol consumption and sex")
+
+dat %>% group_by(sex, high_use) %>% summarise(count = n())
+
+```
+
+1. `failures` it looks like mean failures do increase for both males and females with high alcohol users. The effect size, however, seems small (as depicted by the rather useless boxplot). From the descriptive data, however: mean failures for high user females and males are 0.286 and 0.375, respectively, versus non users' 0.115 and 0.179,
+2. `absences` a face analysis of the boxplots reveals that absences might increase the likelihood of high use of alcohol.
+3. `sexM` being male clearly increases the odds for high use of alcohol. 72/182 (nearly 40 %) of males and 42/198 (~21 %) of females are high users of alcohol.
+4. `age` With males, the likelihood of high use of alcohol seems to be increased with aging. With females, the opposite seems to be true.
+
+But enough with speculation, lets see what the logistic regression model and odds ratios (with confidence intervals) look like.
+
+```{r logmodel, include=TRUE, echo = FALSE}
+
+logmodel <- glm(high_use ~ failures + absences + sex + age, data = dat, family = "binomial")
+
+# summary of the model
+summary(logmodel)
+
+# Odds Ratios and 95 % CI's
+OR <- coef(logmodel) %>% exp
+
+CI <- confint(logmodel) %>% exp
+
+cbind(OR, CI)
+```
