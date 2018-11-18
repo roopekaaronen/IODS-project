@@ -1,7 +1,7 @@
 ---
-title: "Chapter 2: Regression analysis"
-author: "Roope Kaaronen"
-date: "7 November 2018"
+title: "chapter2"
+author: "RK"
+date: "05 November 2018"
 output: html_document
 ---
 
@@ -91,7 +91,7 @@ read.csv(file = "learning2014.csv")
 # ~~~~~~~~~ DATA WRANGLING OVER ~~~~~~~~
 ```
 
-## Data Analysis
+## Chapter 2, Data Analysis
 
 
 This week I did some data wrangling on the JYTOPKYS2 dataset (and created my own learning2014.csv file) and subsequently ran some descriptive analyses as well as multiple and simple regression analyses on the data. You'll find the code for the wrangling in the rmd file. The conclusion of these analyses was that, according to this dataset, study attitudes affect the statistics course scores (points) significantly (p < 0.001).

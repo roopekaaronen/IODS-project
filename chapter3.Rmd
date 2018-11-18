@@ -7,7 +7,9 @@ output: html_document
 
 ## Chapter 3
 
-The variables 1-32 in alc.csv are listed below. The original dataset describes student achievement in secondary education of two Portuguese schools.
+The original dataset describes student achievement in secondary education of two Portuguese schools. For present purposes, I have combined two datasets (performance in mathematics and Portuguese) into one dataset, which I analyse below.
+
+The 35 variables in our dataset alc.csv are listed below. 
 
 ```{r setup, include=F, echo = FALSE}
 library(dplyr)
@@ -16,26 +18,23 @@ library(ggplot2)
 
 ```{r variables, include=TRUE, echo = FALSE}
 
-dat <- read.csv("alc.csv")
+dat <- read.csv("alc.csv", row.names = 1)
 colnames(dat)
-
+dim(dat)
 
 ```
 
+In this exercise I wish to analyse how several variables relate to high use (`high_use`) of alcohol.
 My hypotheses are that
 
-1. `failures` increase the odds for high use of alcohol
-2. `absences` increase the odds for high use of alcohol
-3. `sexM` (being male) increase the odds for high use of alcohol
-4. `age` (aging) increases the odds for high use of alcohol
+1. `failures` increase the odds for high use of alcohol. Note that `failures` here is the number of past class failures (numeric: n if 1<=n<3, else 4).
+2. `absences` increase the odds for high use of alcohol. The absences variable describes the number of school absences (numeric: from 0 to 93).
+3. `sexM` (being male) increase the odds for high use of alcohol.
+4. `age` (aging) increases the odds for high use of alcohol.
 
-Let's graphically explore these variables in relation to `high_use`.
+Before fitting a logistic regression model to the data, let's graphically and numerically explore these variables in relation to `high_use`. There are, of course, many ways to explore these relations, but I chose to use crosstabulations and boxplots here. Here's what they look like:
 
 ```{r exploration, include=TRUE, echo = FALSE}
-
-# # initialise and draw a boxplot of high_use and failures
-g2 <- ggplot(dat, aes(x = high_use, y = failures, col = sex))
-g2 + geom_boxplot(alpha = 0.5) + ggtitle("Student failures by alcohol consumption and sex")
 
 dat %>% group_by(sex, high_use) %>% summarise(count = n(), mean_failures = mean(failures))
 
@@ -53,14 +52,14 @@ dat %>% group_by(sex, high_use) %>% summarise(count = n())
 
 ```
 
-1. `failures` it looks like mean failures do increase for both males and females with high alcohol users. The effect size, however, seems small (as depicted by the rather useless boxplot). From the descriptive data, however: mean failures for high user females and males are 0.286 and 0.375, respectively, versus non users' 0.115 and 0.179,
-2. `absences` a face analysis of the boxplots reveals that absences might increase the likelihood of high use of alcohol.
-3. `sexM` being male clearly increases the odds for high use of alcohol. 72/182 (nearly 40 %) of males and 42/198 (~21 %) of females are high users of alcohol.
+1. `failures` From the first 4x4 tibble (crosstab) it looks like mean failures do increase for both males and females with high alcohol users. The effect size, however, seems small. From the descriptive data, it seems like mean failures for high alcohol use females and males are 0.286 and 0.375, respectively, versus non users' 0.115 and 0.179. In other words, failures seem to increase with high use, although not by very much.
+2. `absences` A face analysis of the boxplots reveals that absences might be related to an increase in the likelihood of high use of alcohol. This effect is more pronounced in males, though.
+3. `sexM` Being male clearly increases the odds for high use of alcohol. As we can see from the crosstab above 72/182 (nearly 40 %) of males and 42/198 (~21 %) of females are high users of alcohol. From the boxplots it's also obvious that sex is an important variable in predicting high use of alcohol.
 4. `age` With males, the likelihood of high use of alcohol seems to be increased with aging. With females, the opposite seems to be true.
 
-But enough with speculation, lets see what the logistic regression model and odds ratios (with confidence intervals) look like.
+Now, lets see what the logistic regression model and odds ratios (with confidence intervals) look like.
 
-```{r logmodel, include=TRUE, echo = FALSE}
+```{r logmodel, include=TRUE, echo = FALSE, message = FALSE}
 
 logmodel <- glm(high_use ~ failures + absences + sex + age, data = dat, family = "binomial")
 
@@ -74,3 +73,85 @@ CI <- confint(logmodel) %>% exp
 
 cbind(OR, CI)
 ```
+Again, I will break the analysis down variable by variable:
+
+1. `failures` The Odds Ratio (OR) for failures is about 1.5. This is not a very large effect size, even if it is below the level of statistical significance (p = 0.0364). 
+2. `absences` OR for absences is ~1.1. Again, this isn't a very large Odds Ratio, although it is statistically significant (p = 8.80e-05). 
+3. `sexM` OR for sex (male) is ~2.6. Sex (i.e., being male) seems to be a very strong predictor for high use of alcohol. It is also, unsurprisingly, highly statistically significant (p = 9.26e-05).
+4. `age`OR for age is ~1.15. Note, however, that hte 95 % confidence intervals include 1. This means that the effect can go either way (age might increase or decrease the odds for high use). Basically, what this means is that `age` isn't much use in modeling high use of alcohol consumption on this model.
+
+Therefore I chose to drop `age` from the logistic regression model model. Here's the model I will use in the rest of these exercises:
+
+```{r logmodel2, include=TRUE, echo = FALSE, message = FALSE}
+
+logmodel2 <- glm(high_use ~ failures + absences + sex, data = dat, family = "binomial")
+
+# summary of the model
+summary(logmodel2)
+
+# Odds Ratios and 95 % CI's
+OR2 <- coef(logmodel2) %>% exp
+
+CI2 <- confint(logmodel2) %>% exp
+
+cbind(OR2, CI2)
+```
+
+I then use the model above to predict probabilities to explore the predictive power of my model. Basically, I use the model to predict the data the model is based on. In this analysis, when probability > 0.5 we predict `high_use` and in other cases low use of alcohol.
+
+Here I analyse the predictive power:
+
+```{r predictions, include=TRUE, echo = FALSE}
+
+# create probabilities to predict the probability of high_use
+probabilities <- predict(logmodel2, type = "response")
+
+# mutate predicted probabilities to alc
+dat <- mutate(dat, probability = probabilities)
+
+# use the probabilities to make a prediction of high_use
+dat <- mutate(dat, prediction = probability > 0.5)
+
+# tabulate the target variable versus the predictions
+table(high_use = dat$high_use, prediction = dat$prediction) %>% addmargins
+
+# same table with props
+table(high_use = dat$high_use, prediction = dat$prediction) %>% prop.table %>% addmargins()
+
+# visualise it!
+gr <- ggplot(dat, aes(x = high_use, y = probability, col = prediction)) + 
+  geom_point()
+gr
+
+#loss function
+loss_func <- function(class, prob) {
+  n_wrong <- abs(class - prob) > 0.5
+  mean(n_wrong)
+}
+
+loss_func(class = dat$high_use, prob = dat$probability)
+
+```
+The loss function, or the ratio of false predicitons to all predictions, of this model is ~0.24. I calculated this with a function (`loss_func`), but more intuitively, we can also calculate this from the crosstab above: (84 + 9) / 382 (ratio of false predictions to all predictions). This means that our model gets about a quarter of its guesses wrong.
+
+In my opinion, this isn't a therefore spectacularly good model at predicting data. Imagine, for instance, that we were interested in using the model to design interventions and thus would use it to spot potential high users of alcohol. From 39 guesses, we would guess 30 correct and 9 wrong.
+
+However, the model is better than a simple guessing strategy. Imagine, for instance, if we just guessed that users were low consumers of alcohol:
+
+
+```{r cv2, include=TRUE, echo = FALSE}
+loss_func(class = dat$high_use, prob = 0)
+```
+
+In this case, we would get around 30 % of our guesses wrong. So yes, my model is better than a simple guessing strategy, but not very much... (I wonder how good a simple one-dimensional model would be with only sex as a predictor!)
+
+**BONUS**: Finally, I'll perform a 10-fold cross-validation by bootstrapping the model. I set the random seed at 1 for this one (meaning that I'll always get the same result).
+
+```{r cv, include=TRUE, echo = FALSE}
+library(boot)
+# set random seed to 1 (for consistent result...)
+set.seed(1)
+cv <- cv.glm(data = dat, cost = loss_func, glmfit = logmodel2, K = 10)
+cv$delta[1]
+```
+My model has smaller prediction error using 10-fold cross-validation (~0.25) than the DataCamp model, but barely so.
