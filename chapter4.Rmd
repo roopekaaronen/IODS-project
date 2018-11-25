@@ -1,7 +1,7 @@
 ---
 title: "chapter3"
 author: "RK"
-date: "13 November 2018"
+date: "25 November 2018"
 output: html_document
 ---
 
@@ -9,14 +9,17 @@ output: html_document
 
 This week, I downloaded the MASS library, and with it, the Boston dataset.
 
-It seems like the Boston dataset has 506 rows and 14 columns.
+It seems like the Boston dataset has 506 rows (observations) and 14 columns (variables).
 
-```{r, message = FALSE}
+```{r, include = FALSE, echo = FALSE}
 library(dplyr)
 library(ggplot2)
 library(tidyr)
 library(corrplot)
 library(MASS)
+```
+
+```{r, , echo = FALSE}
 data("Boston")
 str(Boston)
 dim(Boston)
@@ -42,7 +45,7 @@ The Boston data describes housing values in the suburbs of Boston. The columns i
 
 
 
-Let's explore the data graphically with a correlation matrix.
+For starters, let's explore the data graphically with a correlation matrix.
 
 ```{r, echo=FALSE}
 
@@ -63,11 +66,14 @@ In a corrplot (above), positive correlations are displayed in blue and negative 
 
 Therefore, I'll keep an eye out for large dark blue & red circles.
 
+Some notes:
 `rad` and `tax` correlate positively (highway accessibility correlates with high tax rate)
 `lstat` (lower status) correlates negatively with `medv` (median value of owner-occupied homes)
-etc.
+`age` and `dis` (distance to employment center) have a strong negaive correlation.
+`indus` (industry) and `nox` (nitrogen oxide) are positively correlated (little surprise).
+And so forth.
 
-However, the variables are in different scales. Clustering methods take the assumption that scales are standardized, so let's standardize the data ((xyz - mean(xyz))/sd(xyz).
+However, at the moment, the variables are in different scales. Clustering methods take the assumption that scales are standardized, so let's standardize the data (**(x - mean(x))/sd(x)**).
 
 ```{r, echo=FALSE, message=FALSE}
 # center and standardize variables
@@ -101,6 +107,9 @@ boston_scaled <- data.frame(boston_scaled, crime)
 # number of rows in the Boston dataset 
 n <- nrow(boston_scaled)
 
+# set seed to 1
+set.seed(1)
+
 # choose randomly 80% of the rows
 ind <- sample(n,  size = n * 0.8)
 
@@ -118,9 +127,9 @@ test <- dplyr::select(test, -crime)
 
 
 ```
-As we notice, the variables are now on a comparable scale.
+As we notice, the variables are now on a comparable scale. In other words, the variables have now been rescaled to have a mean of zero and a standard deviation of one.This means that each case's value indicates it's difference from the mean of the original variable in the number of standard deviations. This is a familiar procedure from e.g. p-value calculation (Z-scores).
 
-I also created a categorical variable of the crime rate in the Boston datasetand dropped the old crime rate variable from the dataset. This is necessary for the clustering we will do later on (as clustering requires a categorigal target variable).
+I also created a categorical variable of the crime rate in the Boston datasetand dropped the old crime rate variable from the dataset. This is necessary for the clustering we will do later on.
 
 Moreover, I finally divided the dataset to train and test sets. Now 80% of the data belongs to the train set and 20% to the test set.
 
@@ -152,7 +161,11 @@ lda.arrows(lda.fit, myscale = 1)
 
 ```
 
-Predict test data with trained model.
+As we notice, LDA1 explains about 95% of variance within the data. We could interpret the coefficients of linear discriminants to see how the specific 14 variables cluster the data, but it's much nicer to draw it on a plot. So above you also see a biplot doing just this.
+
+Above you see an LDI biplot with an arrow function. We can interpret from this picture the strenght of specific variables have in clustering the data (and to which direction). For example, `rad` seems to cluster the data into the high-category.
+
+Next I will predict test data with trained model.
 
 ```{r, echo=FALSE}
 # predict classes with test data
@@ -163,7 +176,9 @@ table(correct = correct_classes, predicted = lda.pred$class)
 
 ```
 
-Reload data and rescale:
+It looks like our LDA model is particularly competent in predicting high crime rate (in fact, it gets 19 out of 19 "guesses" correct). This is, for practical purposes, quite good. It does a less good job at predicting med_high and mew_low crime rates, but it's alright at predicting low crime rates.
+
+Next, I will move on to k-means clustering. Let's reload the data and standardize it (much like above):
 
 ```{r, echo=FALSE}
 data("Boston")
@@ -195,9 +210,11 @@ summary(dist_man)
 
 ```
 
-Very interesting distances. Same samish.
+There's nothing surprising here: manhattan distances seem longer, but the in fact the relations between euclidean and manhattan distances are more or less similar.
 
-Now k-means:
+Now I'll do some k-means clustering (with scaled data).
+
+First I'll run a clustering process with three centers.
 
 ```{r, echo=FALSE}
 # k-means clustering
@@ -206,6 +223,11 @@ km <-kmeans(boston_scaled2, centers = 3)
 # plot the Boston dataset with clusters
 pairs(boston_scaled2, col = km$cluster)
 
+```
+
+But what I really want to do is find out the optimal number of clusters. So let's try all numbers of clusters from 1 to 10 and visualise the reslts as an elbow plot. (I use a random seed of 123.)
+
+```{r, echo = FALSE}
 set.seed(123)
 
 # determine the number of clusters
@@ -216,7 +238,13 @@ twcss <- sapply(1:k_max, function(k){kmeans(boston_scaled2, k)$tot.withinss})
 
 # visualize the results
 qplot(x = 1:k_max, y = twcss, geom = 'line')
+```
 
+As we notice, the "elbow" of this plot is when k = 2. This is the most efficient way to cluster the data (we are trying to minimize variance as efficiently as possible here; theoretically as k reaches the number of variables, this variance reaches 0).
+
+Therefore, I conclude that the optimal number of centers is two. So finally, I will visualise these clusters.
+
+```{r, echo = FALSE}
 # k-means clustering
 km <-kmeans(boston_scaled2, centers = 2)
 
@@ -224,3 +252,8 @@ km <-kmeans(boston_scaled2, centers = 2)
 pairs(boston_scaled2, col = km$cluster)
 
 ```
+
+And there you have it. There is a lot (!) to interpret here, but to get to the nitty-gritty: the k-means algorithm seems to do a decent job at clustering. Along the variables, there's some amount of overlap (e.g. pairs `rm` and `nox`; `dis` and `nox`; etc.). On the other hand, some pairs are very neatly clustered (e.g. `tax` and `crime`; `black` and `zn`). So I think the k-means algorithm is doing a decent job here.
+
+That's all for this week. Thanks for reading!
+

@@ -26,3 +26,11 @@ gii <- mutate(gii, FM.Ed = Female.Ed / Male.Ed, FM.Lab = Labour.F / Labour.M)
 human <- inner_join(hd, gii, by = "Country")
 dim(human)
 str(human)
+
+# Observations: 195
+# Variables: 19
+
+# Finally, write the csv
+write.csv(human, file = "human.csv")
+
+# All is set. DATA WRANGLING OVER ~~
