@@ -1,0 +1,94 @@
+---
+title: "chapter5"
+author: "RK"
+date: "27 November 2018"
+output: html_document
+---
+
+## Chapter 5
+
+This week, 
+
+```{r, include = FALSE, echo = FALSE}
+library(dplyr)
+library(ggplot2)
+library(tidyr)
+library(corrplot)
+library(MASS)
+library(GGally)
+```
+
+```{r, echo = FALSE}
+human <- read.csv("human.csv", row.names = 1)
+str(human)
+dim(human)
+View(human)
+```
+
+
+```{r Step1, echo = FALSE}
+# remove the Country variable
+human_ <- dplyr::select(human, -Country)
+
+# visualize the 'human_' variables
+ggpairs(human_)
+
+# compute the correlation matrix and visualize it with corrplot
+cor(human_) %>% corrplot
+```
+
+
+```{r Step2, echo = FALSE, fig.height = 10, fig.width = 10}
+
+# perform principal component analysis (with the SVD method)
+pca_human <- prcomp(human_)
+
+# draw a biplot of the principal component representation and the original variables
+biplot(pca_human, choices = 1:2, cex = c(0.8, 1), col = c("grey40", "deeppink2"))
+```
+
+
+```{r Step3, echo = FALSE, fig.height = 10, fig.width = 10}
+# standardize the variables
+human_std <- scale(human_)
+
+# print out summaries of the standardized variables
+summary(human_std)
+
+# perform principal component analysis (with the SVD method)
+pca_human2 <- prcomp(human_std)
+
+# draw a biplot of the principal component representation and the original variables
+biplot(pca_human2, choices = 1:2, cex = c(0.8, 1), col = c("grey40", "deeppink2"), main = "PC2 Democracy/Equality, PC2 Health & Mortality")
+```
+Give your personal interpretations of the first two principal component dimensions based on the biplot drawn after PCA on the standardized human data.
+
+```{r Step5, echo = FALSE}
+library(FactoMineR)
+data("tea")
+str(tea)
+dim(tea)
+
+# column names to keep in the dataset
+keep_columns <- c("Tea", "How", "how", "sugar", "where", "lunch")
+
+# select the 'keep_columns' to create a new dataset
+tea_time <- dplyr::select(tea, one_of(keep_columns))
+
+# visualize the dataset
+gather(tea_time) %>% ggplot(aes(value)) + facet_wrap("key", scales = "free") + geom_bar() + theme(axis.text.x = element_text(angle = 45, hjust = 1, size = 8))
+
+```
+
+```{r Step5vol2, echo = FALSE}
+# multiple correspondence analysis
+mca <- MCA(tea_time, graph = FALSE)
+
+# summary of the model
+summary(mca)
+
+# visualize MCA
+plot(mca, invisible=c("ind"), habillage = "quali")
+```
+
+explain 
