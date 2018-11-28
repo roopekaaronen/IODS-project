@@ -7,7 +7,19 @@ output: html_document
 
 ## Chapter 5
 
-This week, 
+This week, I will work on dimensionality reduction techniques. I use the 'human' dataset originates the United Nations Development Programme.
+
+This chapter is preceded by last week's and this week's data wrangling, so here's a quick update on my variables:
+
+`FM.Ed` Proportion of females to males with at least secondary education
+`FM.Lab`  Proportion of females o males in the labour force
+`Life.Exp.` Life expectancy at birth
+`Exp.Ed` Expected years of schooling 
+`GNI` Gross National Income per capita               : 
+`Maternal.Mortality` Maternal mortality ratio
+`Adol.Birth` Adolescent birth rate
+`Parliament` Percetange of female representatives in parliament
+
 
 ```{r, include = FALSE, echo = FALSE}
 library(dplyr)
@@ -25,43 +37,67 @@ dim(human)
 View(human)
 ```
 
+First let's present a graphical overview of the data.
+
+I will use ggpairs and corrplot for this again, since the latter in particular is a nice and quick way to get an overview of the relations between the variables.
 
 ```{r Step1, echo = FALSE}
-# remove the Country variable
-human_ <- dplyr::select(human, -Country)
 
 # visualize the 'human_' variables
-ggpairs(human_)
+ggpairs(human)
 
 # compute the correlation matrix and visualize it with corrplot
-cor(human_) %>% corrplot
+cor(human) %>% corrplot
 ```
 
+The results are, to say the least, unsurprising. Maternal mortality correlates negativey with life expectancy and expected education; Life expectancy correlates positively with expected years of education; Adolescent birth rate correlates negatively with expected education. Perhaps more surprising would be the meagre correlation between GNI and life expectancy.
+
+Next, as the instructions thus instructed, I perform a PCA analysis with non-standardized data. This, of course, makes very little sense, since if some variables have large variances the PCA function will load them more heavily. This is because PCA in fact tries to maximize the variance captured by the principal components. So here it is...
 
 ```{r Step2, echo = FALSE, fig.height = 10, fig.width = 10}
 
 # perform principal component analysis (with the SVD method)
-pca_human <- prcomp(human_)
+pca_human <- prcomp(human)
 
 # draw a biplot of the principal component representation and the original variables
 biplot(pca_human, choices = 1:2, cex = c(0.8, 1), col = c("grey40", "deeppink2"))
 ```
 
+And as we see, the result is a rather ugly and uninformative graph. Ugh!
+
+So let's standardize the data instead and produce a new proper PCA analysis:
+
 
 ```{r Step3, echo = FALSE, fig.height = 10, fig.width = 10}
 # standardize the variables
-human_std <- scale(human_)
+human_std <- scale(human)
 
 # print out summaries of the standardized variables
 summary(human_std)
 
 # perform principal component analysis (with the SVD method)
 pca_human2 <- prcomp(human_std)
-
+summary(pca_human2)
 # draw a biplot of the principal component representation and the original variables
-biplot(pca_human2, choices = 1:2, cex = c(0.8, 1), col = c("grey40", "deeppink2"), main = "PC2 Democracy/Equality, PC2 Health & Mortality")
+biplot(pca_human2, choices = 1:2, cex = c(0.8, 1), col = c("grey40", "deeppink2"), main = "PC1 is related to democracy and gender equality, PC2 is related to health, wealth and education")
 ```
-Give your personal interpretations of the first two principal component dimensions based on the biplot drawn after PCA on the standardized human data.
+The results, as we see, are very different. This is because PCA maximises variance, i.e. it projects our data so that it maximizes the variance. Without standardization some particular variables (GNI in particular, it seems) will form most of the principal component (as they have the most variance).
+
+With the standardized version, things look different.
+
+Let's interpret the angles between original variables and the principal components (PC1 and PC2) first. 
+
+With PC1, which explains around 54 % of total variance, GNI, life expectancy, expected education, proportion of females in education, maternal mortality and adolescent birth rate seem to correlate. Life expectancy looks like the strongest predictor here.
+
+With PC2, the ratio of females in parliament and the labor force seem to correlate.
+
+It almost seems like PC1 could be labelled as something like "Health and education" (which increases to the left) whereas PC2 could be labelled "Democracy and gender representation" (which increases upwards). By looking at the countries, they seem to group quite nicely here. We can clearly see the Nordic states, northern central European states and Oceanic states grouped at the top left (highest in both PCA's). On the opposite side of the spectrum, poor and war-torn countries such as Sudan and Afghanistan "score" lowest on the PCA's.
+
+This is all quite interesting, actually.
+
+But enough with the PCA's. Here's some tea analysis to lighten things up a bit.
+
+First let's look at the structure and dimensions of the data and visualize it:
 
 ```{r Step5, echo = FALSE}
 library(FactoMineR)
@@ -80,6 +116,10 @@ gather(tea_time) %>% ggplot(aes(value)) + facet_wrap("key", scales = "free") + g
 
 ```
 
+This is possibly the most interesting thing I've ever seen: people seem to prefer Earl Grey tea. Well, it's a classic choice, after all. The respondents also seem torn between sugar and no sugar (I'm a no sugar person myself). Tea shops don't seem to do too well, which is also unsurprising and truly a shame. And people seem to be convenient teabaggers.
+
+But enough of the tea tests (pun intended), let's do a Multiple Correspondence Analysis on the data:
+
 ```{r Step5vol2, echo = FALSE}
 # multiple correspondence analysis
 mca <- MCA(tea_time, graph = FALSE)
@@ -91,4 +131,4 @@ summary(mca)
 plot(mca, invisible=c("ind"), habillage = "quali")
 ```
 
-explain 
+EXPLAIN (BUT HOW) 

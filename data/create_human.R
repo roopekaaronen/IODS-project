@@ -69,6 +69,9 @@ View(human)
 
 # 155 observations from 9 variables. Looks good.
 
+# remove the Country variable
+human <- dplyr::select(human, -Country)
+
 # Finally, write the csv
 write.csv(human, file = "human.csv", row.names = TRUE) 
 
