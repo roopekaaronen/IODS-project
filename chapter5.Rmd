@@ -7,9 +7,9 @@ output: html_document
 
 ## Chapter 5
 
-This week, I will work on dimensionality reduction techniques. I use the 'human' dataset originates the United Nations Development Programme.
+This week, I will work on dimensionality reduction techniques. I use the 'human' dataset, originally from the United Nations Development Programme.
 
-This chapter is preceded by last week's and this week's data wrangling, so here's a quick update on my variables:
+This chapter is preceded by last week's and this week's data wrangling, so here's a quick update on the status of my variables (8 columns, 155 rows):
 
 `FM.Ed` Proportion of females to males with at least secondary education
 `FM.Lab`  Proportion of females o males in the labour force
@@ -52,9 +52,9 @@ cor(human) %>% corrplot
 
 The results are, to say the least, unsurprising. Maternal mortality correlates negativey with life expectancy and expected education; Life expectancy correlates positively with expected years of education; Adolescent birth rate correlates negatively with expected education. Perhaps more surprising would be the meagre correlation between GNI and life expectancy.
 
-Next, as the instructions thus instructed, I perform a PCA analysis with non-standardized data. This, of course, makes very little sense, since if some variables have large variances the PCA function will load them more heavily. This is because PCA in fact tries to maximize the variance captured by the principal components. So here it is...
+Next, abiding with the instructions, I perform a PCA analysis with non-standardized data. This, of course, makes very little sense, since if some variables have large variances the PCA function will load them more heavily (I presume `GNI` will cause trouble in particular). This is because PCA in fact tries to **maximize the variance** captured by the principal components. So here it is...
 
-```{r Step2, echo = FALSE, fig.height = 10, fig.width = 10}
+```{r Step2, echo = FALSE, warning = FALSE, fig.height = 10, fig.width = 10}
 
 # perform principal component analysis (with the SVD method)
 pca_human <- prcomp(human)
@@ -63,7 +63,7 @@ pca_human <- prcomp(human)
 biplot(pca_human, choices = 1:2, cex = c(0.8, 1), col = c("grey40", "deeppink2"))
 ```
 
-And as we see, the result is a rather ugly and uninformative graph. Ugh!
+And as we see, the result is a rather ugly and uninformative graph. Ugh! This is because PCA maximises variance, i.e. it projects our data so that it maximizes the variance. Without standardization some particular variables (GNI in particular, as predicted) will form most of the principal component (as it covers the most variance).
 
 So let's standardize the data instead and produce a new proper PCA analysis:
 
@@ -81,23 +81,22 @@ summary(pca_human2)
 # draw a biplot of the principal component representation and the original variables
 biplot(pca_human2, choices = 1:2, cex = c(0.8, 1), col = c("grey40", "deeppink2"), main = "PC1 is related to democracy and gender equality, PC2 is related to health, wealth and education")
 ```
-The results, as we see, are very different. This is because PCA maximises variance, i.e. it projects our data so that it maximizes the variance. Without standardization some particular variables (GNI in particular, it seems) will form most of the principal component (as they have the most variance).
 
 With the standardized version, things look different.
 
 Let's interpret the angles between original variables and the principal components (PC1 and PC2) first. 
 
-With PC1, which explains around 54 % of total variance, GNI, life expectancy, expected education, proportion of females in education, maternal mortality and adolescent birth rate seem to correlate. Life expectancy looks like the strongest predictor here.
+Let's analyse PC1 first, which explains around 54 % of total variance: GNI, life expectancy, expected education, proportion of females in education, maternal mortality and adolescent birth rate seem to correlate with PC1. Life expectancy looks like the strongest single predictor here.
 
 With PC2, the ratio of females in parliament and the labor force seem to correlate.
 
-It almost seems like PC1 could be labelled as something like "Health and education" (which increases to the left) whereas PC2 could be labelled "Democracy and gender representation" (which increases upwards). By looking at the countries, they seem to group quite nicely here. We can clearly see the Nordic states, northern central European states and Oceanic states grouped at the top left (highest in both PCA's). On the opposite side of the spectrum, poor and war-torn countries such as Sudan and Afghanistan "score" lowest on the PCA's.
+It seems to me like PC1 could be labelled as something like "Health and education" (which increases to the left on the x-axis) whereas PC2 could be labelled "Democracy and gender representation" (which increases upwards on the y-axis). By looking at the countries, they seem to group quite nicely here. We can clearly see the Nordic states, northern central European states and Oceanic states grouped at the top left (highest in both PCA's, i.e. high health and democracy). On the opposite side of the spectrum, poor and war-torn countries such as Sudan and Afghanistan score lowest on the PCA's.
 
-This is all quite interesting, actually.
+This is all quite interesting, actually, since the grouping between the principal components makes good sense.
 
-But enough with the PCA's. Here's some tea analysis to lighten things up a bit.
+But enough with the PCA's. What follows next is some tea analysis to lighten things up a bit.
 
-First let's look at the structure and dimensions of the data and visualize it:
+First let's look at the structure and dimensions of the data and visualize it (I only keep 6 columns of the original data, as this was an option):
 
 ```{r Step5, echo = FALSE}
 library(FactoMineR)
@@ -116,9 +115,9 @@ gather(tea_time) %>% ggplot(aes(value)) + facet_wrap("key", scales = "free") + g
 
 ```
 
-This is possibly the most interesting thing I've ever seen: people seem to prefer Earl Grey tea. Well, it's a classic choice, after all. The respondents also seem torn between sugar and no sugar (I'm a no sugar person myself). Tea shops don't seem to do too well, which is also unsurprising and truly a shame. And people seem to be convenient teabaggers.
+This is interesting: people seem to prefer Earl Grey tea. Well, it's a classic choice, after all. The respondents also seem torn between sugar and no sugar (I'm a no sugar person myself). Tea shops don't seem to do too well, which is also unsurprising and truly a shame. And people seem to be convenient teabaggers.
 
-But enough of the tea tests (pun intended), let's do a Multiple Correspondence Analysis on the data:
+But enough of the tea tests (punny stats joke intended), let's do a Multiple Correspondence Analysis on the data:
 
 ```{r Step5vol2, echo = FALSE}
 # multiple correspondence analysis
@@ -131,4 +130,6 @@ summary(mca)
 plot(mca, invisible=c("ind"), habillage = "quali")
 ```
 
-EXPLAIN (BUT HOW) 
+The MCA factor map reduced the data into two dimensions. The first dimension, Dim 1, explains about 15 % of the variance of the data. Dim 2 explains about 14 % of the variance. The first conclusion is therefore that this dimension reduction map isn't spectacularly good at organizing the data, since it only explains about a third of the total variance of the data. Dim 1 seems particularly to predict where the tea is bought (tea shop or chain store), differenting between "aficionado's" (tea shop & unpackaged) and more casual drinkers. The second dimension is a lot more complex to intepret. In fact, I find it very difficult to label this factor as it has very little coherence thematically, but that's something we'll have to live with. Actually this difficulty to label it makes good sense, since the factor only explains such a small amount of variance to begin with.
+
+That's all for this week, thank you for reading!

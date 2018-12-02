@@ -46,6 +46,7 @@ str(human)
 library(stringr)
 human$GNI <- str_replace(human$GNI, pattern=",", replace ="") %>% as.numeric
 
+# keep only the select columns
 keep <- c("Country", "FM.Ed", "FM.Lab", "Life.Exp.", "Exp.Ed", "GNI", "Maternal.Mortality", "Adol.Birth", "Parliament")
 
 human <- dplyr::select(human, one_of(keep))
@@ -75,4 +76,5 @@ human <- dplyr::select(human, -Country)
 # Finally, write the csv
 write.csv(human, file = "human.csv", row.names = TRUE) 
 
-?write.csv
+# END OF CH 5.
+
