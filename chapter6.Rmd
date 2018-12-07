@@ -1,0 +1,128 @@
+---
+title: "chapter6"
+author: "RK"
+date: "4 December 2018"
+output: html_document
+---
+
+## Chapter 6
+
+
+
+```{r, include = FALSE, echo = FALSE}
+library(dplyr)
+library(ggplot2)
+library(tidyr)
+library(corrplot)
+library(MASS)
+library(GGally)
+```
+
+```{r, echo = FALSE}
+RATS <- read.csv("RATSL.csv")
+BPRS <- read.csv("BPRSL.csv")
+
+str(RATS)
+str(BPRS)
+dim(RATS)
+dim(BPRS)
+```
+
+
+```{r, echo = FALSE}
+View(RATS)
+View(BPRS)
+
+RATS$ID <- as.factor(RATS$ID)
+RATS$Group <- as.factor(RATS$Group)
+?aes
+                 
+ggplot(RATS, aes(x = Time, y = Weight, linetype = ID)) +
+  geom_line() +
+  scale_linetype_manual(values = rep(1:10, times=4)) +
+  facet_grid(. ~ Group, labeller = label_both) +
+  theme(legend.position = "none") + 
+  scale_y_continuous(limits = c(min(RATS$Weight), max(RATS$Weight)))
+
+```
+
+
+```{r, echo = FALSE}
+RATSSTD <- RATS %>%
+  group_by(Group) %>%
+  mutate(stdrats = (Weight - mean(Weight))/sd(Weight) ) %>%
+  ungroup()
+
+
+ggplot(RATSSTD, aes(x = Time, y = stdrats, linetype = ID)) +
+  geom_line() +
+  scale_linetype_manual(values = rep(1:10, times=4)) +
+  facet_grid(. ~ Group, labeller = label_both) +
+  scale_y_continuous(name = "standardized rats")
+
+```
+
+Create summary data:
+```{r, echo = FALSE}
+n <- RATS$Time %>% unique() %>% length()
+RATSS <- RATS %>%
+  group_by(Group, Time) %>%
+  summarise( mean = mean(Weight), se = sd(Weight)/sqrt(n) ) %>%
+  ungroup()
+
+glimpse(RATSS)
+
+```
+
+Summary plot:
+
+```{r, echo = FALSE}
+ggplot(RATSS, aes(x = Time, y = mean, linetype = Group, shape = Group)) +
+  geom_line() +
+  scale_linetype_manual(values = c(1,2,3)) +
+  geom_point(size=3) +
+  scale_shape_manual(values = c(1,2,3)) +
+  geom_errorbar(aes(ymin = mean - se, ymax = mean + se, linetype="1"), width=0.3) +
+  scale_y_continuous(name = "mean(Weight) +/- se(Weight)")
+```
+
+Spot outliers:
+```{r, echo = FALSE}
+RATSOUT <- RATS %>%
+  filter(Time > 0) %>%
+  group_by(Group, ID) %>%
+  summarise( mean=mean(Weight) ) %>%
+  ungroup()
+
+# Glimpse the data
+glimpse(RATSOUT)
+
+# Draw a boxplot of the mean versus treatment
+ggplot(RATSOUT, aes(x = Group, y = mean)) +
+  geom_boxplot() +
+  stat_summary(fun.y = "mean", geom = "point", shape=23, size=4, fill = "white") +
+  scale_y_continuous(name = "mean(Weight), weeks 1 onward")
+
+RATSOUT2 <- RATSOUT %>%
+  filter(mean < 550)
+
+ggplot(RATSOUT2, aes(x = Group, y = mean)) +
+  geom_boxplot() +
+  stat_summary(fun.y = "mean", geom = "point", shape=23, size=4, fill = "white") +
+  scale_y_continuous(name = "mean(Weight), weeks 1 onward")
+```
+
+
+```{r, echo = FALSE}
+anova <- aov(mean ~ Group, data = RATSOUT2)
+summary(anova)
+
+RATSORIG <- read.table("https://raw.githubusercontent.com/KimmoVehkalahti/MABS/master/Examples/data/rats.txt", header = TRUE, sep = '\t')
+
+
+RATS_final <- RATSOUT %>%
+  mutate(baseline = RATSORIG$WD1)
+
+fit <- lm(mean ~ Group + baseline, data = RATS_final)
+anova(fit)
+```
