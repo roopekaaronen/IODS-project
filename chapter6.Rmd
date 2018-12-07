@@ -123,6 +123,92 @@ RATSORIG <- read.table("https://raw.githubusercontent.com/KimmoVehkalahti/MABS/m
 RATS_final <- RATSOUT %>%
   mutate(baseline = RATSORIG$WD1)
 
-fit <- lm(mean ~ Group + baseline, data = RATS_final)
+fit <- lm(mean ~ baseline + Group, data = RATS_final)
 anova(fit)
+```
+
+Then BPRS:
+
+```{r, echo = FALSE}
+str(BPRS)
+View(BPRS)
+
+BPRS$treatment <- factor(BPRS$treatment)
+BPRS$subject <- factor(BPRS$subject)
+```
+
+```{r, echo = FALSE}
+
+ggplot(BPRS, aes(x = week, y = bprs, linetype = subject)) +
+  geom_line() +
+  scale_linetype_manual(values = rep(1:10, times=4)) +
+  facet_grid(. ~ treatment, labeller = label_both) +
+  theme(legend.position = "none") + 
+  scale_y_continuous(limits = c(min(BPRS$bprs), max(BPRS$bprs)))
+
+```
+
+
+```{r, echo = FALSE}
+# create a regression model RATS_reg
+BPRS_reg <- lm(bprs ~ week + treatment, data = BPRS)
+
+# print out a summary of the model
+summary(BPRS_reg)
+```
+
+
+```{r, echo = FALSE}
+# access library lme4
+library(lme4)
+
+# Create a random intercept model
+BPRS_ref <- lmer(bprs ~ week + treatment + (1 | subject), data = BPRS, REML = FALSE)
+
+summary(BPRS_ref)
+```
+
+Random intercept and slope:
+```{r, echo = FALSE}
+BPRS_ref1 <- lmer(bprs ~ week + treatment + (week | subject), data = BPRS, REML = FALSE)
+
+# print a summary of the model
+summary(BPRS_ref1)
+
+# perform an ANOVA test on the two models
+anova(BPRS_ref1, BPRS_ref)
+```
+
+
+```{r, echo = FALSE}
+BPRS_ref2 <- lmer(bprs ~ week * treatment + (week | subject), data = BPRS, REML = FALSE)
+
+summary(BPRS_ref2)
+anova(BPRS_ref2, BPRS_ref1)
+
+```
+
+
+```{r, echo = FALSE}
+ggplot(BPRS, aes(x = week, y = bprs, linetype = subject)) +
+  geom_line() +
+  scale_linetype_manual(values = rep(1:10, times=4)) +
+  facet_grid(. ~ treatment, labeller = label_both) +
+  theme(legend.position = "none") + 
+  scale_y_continuous(limits = c(min(BPRS$bprs), max(BPRS$bprs)))
+
+# Create a vector of the fitted values
+Fitted <- fitted(BPRS_ref2)
+
+# Create a new column fitted to RATSL
+BPRS <- BPRS %>%
+  mutate(Fitted)
+
+ggplot(BPRS, aes(x = week, y = Fitted, linetype = subject)) +
+  geom_line() +
+  scale_linetype_manual(values = rep(1:10, times=4)) +
+  facet_grid(. ~ treatment, labeller = label_both) +
+  theme(legend.position = "none") + 
+  scale_y_continuous(limits = c(min(BPRS$bprs), max(BPRS$bprs)))
+
 ```
