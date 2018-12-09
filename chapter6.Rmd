@@ -7,6 +7,7 @@ output: html_document
 
 ## Chapter 6
 
+Welcome to the final week of IODS! This time, I'll do some longitudinal data analyses, including graphical displays and linear mixed effects models.
 
 
 ```{r, include = FALSE, echo = FALSE}
@@ -18,6 +19,10 @@ library(MASS)
 library(GGally)
 ```
 
+I have completed the data wrangling exercise elsewhere, and I'll read the resultant data from those into two data frames, `RATS` and `BPRS` (note that despite their names here, they are the long forms of the data, or RATSL and BPRSL in the data wrangling exercise). RATS is a data set which describes how rats grow on different diets; BPRS evaluates patients' scale of schizophrenia over time when subjected to different treatment.
+
+The data are structured as follows:
+
 ```{r, echo = FALSE}
 RATS <- read.csv("RATSL.csv")
 BPRS <- read.csv("BPRSL.csv")
@@ -28,6 +33,7 @@ dim(RATS)
 dim(BPRS)
 ```
 
+I begin by plotting the RATS data over time. The groups are separated by diet (`Group`) below.
 
 ```{r, echo = FALSE}
 View(RATS)
@@ -35,7 +41,6 @@ View(BPRS)
 
 RATS$ID <- as.factor(RATS$ID)
 RATS$Group <- as.factor(RATS$Group)
-?aes
                  
 ggplot(RATS, aes(x = Time, y = Weight, linetype = ID)) +
   geom_line() +
@@ -46,10 +51,11 @@ ggplot(RATS, aes(x = Time, y = Weight, linetype = ID)) +
 
 ```
 
+From this graph it particularly seems like Group 1 differs from the others: Their weight starts lower (intercept) and continues to track lower than with the other groups. Also noticable already is that the individuals with significantly lower or higher weight at the beginning maintain their relative weight to others (Group 2 has one clear outlier above every other individual, Group 1 and 3 have one individual who drags below the others). This phenomenon is generally called "tracking" in longitudinal data-analysis. Sometimes, standardization of data is used to highlight the tracking effect. Therefore, I will now produce the same graph except with standardized data (Weight - mean(Weight))/sd(Weight)).
 
 ```{r, echo = FALSE}
 RATSSTD <- RATS %>%
-  group_by(Group) %>%
+  group_by(Group, Time) %>%
   mutate(stdrats = (Weight - mean(Weight))/sd(Weight) ) %>%
   ungroup()
 
@@ -62,7 +68,9 @@ ggplot(RATSSTD, aes(x = Time, y = stdrats, linetype = ID)) +
 
 ```
 
-Create summary data:
+Since standardization centres the data around the a mean (which is 0), in effect we "zoom into" the visualized data. This could help us with identifying tracking phenomena in the data, although in this case I don't find that the standardization helps us identify any significant new phenomena other than the ones identified above, even if the difference is more clear now.
+
+Next, I will create summary data with which I can plot and run some tests later on. I also create some useful efficients such as the mean and standard error of the data by `Time`.
 ```{r, echo = FALSE}
 n <- RATS$Time %>% unique() %>% length()
 RATSS <- RATS %>%
@@ -74,7 +82,7 @@ glimpse(RATSS)
 
 ```
 
-Summary plot:
+With the summary datam, I can draw this nice plot which displays the mean of each group over time, with the error bars displaying the standard error (or the estimate of standard deviation of its sampling distribution). 
 
 ```{r, echo = FALSE}
 ggplot(RATSS, aes(x = Time, y = mean, linetype = Group, shape = Group)) +
@@ -85,8 +93,9 @@ ggplot(RATSS, aes(x = Time, y = mean, linetype = Group, shape = Group)) +
   geom_errorbar(aes(ymin = mean - se, ymax = mean + se, linetype="1"), width=0.3) +
   scale_y_continuous(name = "mean(Weight) +/- se(Weight)")
 ```
+This visualization helps us summarize much of the noisy original data into a more coherent picture. As it seems, the mean line of Group 1 drags considerably below the others, whereas Group 2 has a higher mean over time and Group 3 the highest. The Groups all seem to steadily grow in weight over time (or in other words, if we were to draw a regression line through them, the slope would be more or less the same).
 
-Spot outliers:
+However, as I pointed out above, we do have some outliers in this data. So let's spot them and get rid of them. With the summarized data, I'll now draw two boxplots: one with all the data and one with the most significant outlier removed:
 ```{r, echo = FALSE}
 RATSOUT <- RATS %>%
   filter(Time > 0) %>%
@@ -113,6 +122,10 @@ ggplot(RATSOUT2, aes(x = Group, y = mean)) +
 ```
 
 
+As you'll notice, the error bars in Group 2 shrink greatly once the outlier is removed. Removing outliers is always a practice one should be cautious with, though, so it is questionable whether we should remove this particular data point or not (to my mind, it doesn't seem like the data point is a result of any explicit mistake or labeling error; it's just one heavy rat!).
+
+Finally, since it's often required to do some explicit statistical analyses (and produce those p-values some people insist on!), let's run some statistical models. In the datacamp excercies we did a t-test, but with three groups this cannot be done. So I chose to do an ANOVA instead:
+
 ```{r, echo = FALSE}
 anova <- aov(mean ~ Group, data = RATSOUT2)
 summary(anova)
@@ -127,15 +140,22 @@ fit <- lm(mean ~ baseline + Group, data = RATS_final)
 anova(fit)
 ```
 
-Then BPRS:
+Here's my interpretation of what's going on. Firstly, the groups differ significantly between eachother(p = 3.39e-12). This is not really surprising, as we notice from the boxplot above that the groups' means do in fact differ quite a lot and their confidence intervals do not overlap.
+
+However, when I add the baseline to the data (WD1 from the original RATS data) and fit the linear model `mean ~ baseline + Group` onto the data, it seems like baseline is the strongest predictor of the data points over time. In other words, it seems like the slopes of the Groups do not differ significantly from eachother (p = 0.07586), and the groups just start from a different mean `Weight`. That's quite interesting, and I'm left wondering about how the case is exactly that the groups differed so largely before the treatment. Hmm...
+
+That's all for the RATS data, let's now move on to the BPRS analyses. This will include some relatively complicated linear mixed effect models, possibly the most challenging models in this course so far.
+
+Firstly, a quick look at the structure of the data:
 
 ```{r, echo = FALSE}
 str(BPRS)
-View(BPRS)
 
 BPRS$treatment <- factor(BPRS$treatment)
 BPRS$subject <- factor(BPRS$subject)
 ```
+
+And then, a quick plot of the data (similar to what I did before):
 
 ```{r, echo = FALSE}
 
@@ -148,6 +168,10 @@ ggplot(BPRS, aes(x = week, y = bprs, linetype = subject)) +
 
 ```
 
+From a face analysis, it seems to me like the two groups (two kinds of treatment) do not differ greatly. You'll notice some tracking, though, particularly with the highest bprs-scoring individual in treatment 2. Over 8 weeks, the mean scores on bprs seems to lower (either a product of successful treatment or regression towards mediocrity? We won't know without a control group!). Not much else to report here, so let's move on to some statistical analyses.
+
+Firstly, I will run a normal regression analysis. Note that in any real analysis this shouldn't be done, as I am now ignoring the repeated-measures structure of the data and the autocorrelation that goes with it (i.e., the data points are NOT independent of eachother, which is an assumption underlying linear regression models). In any case, here is the multiple regression model with two independent variables (week and treatment).
+
 
 ```{r, echo = FALSE}
 # create a regression model RATS_reg
@@ -157,6 +181,9 @@ BPRS_reg <- lm(bprs ~ week + treatment, data = BPRS)
 summary(BPRS_reg)
 ```
 
+It seems like `week` is a significant predictor of the data, but treatment isn't. In other words, the bprs scores develop in time (the slope is negative), but the treatment does not play a significant effect in this. There's no reason to take this analysis further, though, as we know that it's assumptions are flawed.
+
+So instead, I will not move on to mixed effect models, and firstly to a random intercept model. In a random intercepts model, the intercepts are allowed to vary and therefore each individual will have a unique intercept. Whilst the intercept is allowed to vary, the slope is not. Therefore, the model assumes that slopes are fixed. I continue to use the same explanatory variables (week and treatment).
 
 ```{r, echo = FALSE}
 # access library lme4
@@ -168,17 +195,29 @@ BPRS_ref <- lmer(bprs ~ week + treatment + (1 | subject), data = BPRS, REML = FA
 summary(BPRS_ref)
 ```
 
-Random intercept and slope:
+Between the subjects, at the intercept, the variance is ~47 bprs points, and the standard deviation is ~7. It seems like the individual subject score seems to explain quite a bit of the variance here, although the residual (the unexplained error) is still quite big (variance 104)! So the model here isn't exactly doing a great job, but it's starting to explain some of the individual-level trends in the data. It's also useful to have a look at the AIC or Akaike Information Criterion here: AIC quantifies the expected data loss of a model and is useful in model comparison. It's some quite tricky information-theoretical stuff, but the AIC here is about 2749. This will be useful when considering the other following models.
+
+
+Next up, a random intercept and slope model. This is otherwise same as the model above, except now we allow every individual to have a unique slope as well. 
+
 ```{r, echo = FALSE}
 BPRS_ref1 <- lmer(bprs ~ week + treatment + (week | subject), data = BPRS, REML = FALSE)
 
 # print a summary of the model
 summary(BPRS_ref1)
+```
 
-# perform an ANOVA test on the two models
+It seems like this model isn't doing a whole lot better than the previous one, although it is does a slighly better job at explaining individual level variance (65) and reduces the unexplained residual (error) of the model (which is now 97.4). AIC is ever so slightly lower (2745), which suggests that the information loss is a bit lower with this than the previous model. But all in all, adding a random slope has not greatly improved the model, in my opinion.
+
+Let's continue to perform an ANOVA test on the two models we made above:
+```{r, echo = FALSE} 
+
 anova(BPRS_ref1, BPRS_ref)
 ```
 
+As it appears, the two models do differ significantly from eachother (p = 0.02636), and the lower the p-value the better the fit against the comparison model. I take this to imply (together with the previous thoughts) that the extra degrees of freedom included in the latter model make it slightly better, but not by much.
+
+Now let's move to a random intercept and slope model with a week * treatment interaction effect. Considering how complicating the model didn't work too well before, I have a feeling this won't work too well. But let's see what happens. Here's the model and anova between this and the previous model.
 
 ```{r, echo = FALSE}
 BPRS_ref2 <- lmer(bprs ~ week * treatment + (week | subject), data = BPRS, REML = FALSE)
@@ -188,6 +227,9 @@ anova(BPRS_ref2, BPRS_ref1)
 
 ```
 
+First of all, the residual or unexplained error didn't get much smaller (it's now 96.5). The AIC also didn't decrease by much at all (now 2744). Doesn't look like our complications are worth the effort! The ANOVA also suggests this, as the model comparison doesn't produce a statistically significant result (p = 0.07495). In other words, less might be more with this model and it's better not to complicate it further with this interaction effect.
+
+Finally, I will draw some graphs to show what's been happening here. First we have the original data, and after it the random intercept and slope model (`BPRS_ref1`). I didn't use the interaction model here (as in datacamp) since I came above to the conclusion that it was not better than the one without the interaction effect.
 
 ```{r, echo = FALSE}
 ggplot(BPRS, aes(x = week, y = bprs, linetype = subject)) +
@@ -198,7 +240,7 @@ ggplot(BPRS, aes(x = week, y = bprs, linetype = subject)) +
   scale_y_continuous(limits = c(min(BPRS$bprs), max(BPRS$bprs)))
 
 # Create a vector of the fitted values
-Fitted <- fitted(BPRS_ref2)
+Fitted <- fitted(BPRS_ref1)
 
 # Create a new column fitted to RATSL
 BPRS <- BPRS %>%
@@ -210,5 +252,6 @@ ggplot(BPRS, aes(x = week, y = Fitted, linetype = subject)) +
   facet_grid(. ~ treatment, labeller = label_both) +
   theme(legend.position = "none") + 
   scale_y_continuous(limits = c(min(BPRS$bprs), max(BPRS$bprs)))
-
 ```
+
+With the Fitted model, it seems a lot more clear to identify some general underlying trends. 
