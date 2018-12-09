@@ -236,7 +236,7 @@ First of all, the residual or unexplained error didn't get much smaller (it's no
 
 Finally, I will draw some graphs to show what's been happening here. First we have the original data, and after it the random intercept and slope model (`BPRS_ref1`). I didn't use the interaction model here (as in datacamp) since I came above to the conclusion that it was not better than the one without the interaction effect.
 
-```{r, echo = FALSE}
+```{r, echo = FALSE, warning = FALSE}
 ggplot(BPRS, aes(x = week, y = bprs, linetype = subject)) +
   geom_line() +
   scale_linetype_manual(values = rep(1:10, times=4)) +
