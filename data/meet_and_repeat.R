@@ -1,7 +1,7 @@
 # ROOPE KAARONEN, 4.12.2018
 # IODS COURSE PROJECT, DATA WRANGLING EXERCISE, CHAPTER 6
 
-
+# Download all packages
 library(dplyr)
 library(ggplot2)
 library(tidyr)
@@ -10,10 +10,13 @@ library(MASS)
 library(GGally)
 ###
 
+
+# Read in the data
 BPRS <- read.table("https://raw.githubusercontent.com/KimmoVehkalahti/MABS/master/Examples/data/BPRS.txt", sep  =" ", header = T)
 
 RATS <- read.table("https://raw.githubusercontent.com/KimmoVehkalahti/MABS/master/Examples/data/rats.txt", header = TRUE, sep = '\t')
 
+# A (very) thorough look at the data!
 View(BPRS)
 str(BPRS)
 dim(BPRS)
@@ -28,7 +31,7 @@ summary(RATS)
 glimpse(RATS)
 
 
-## Factor categorical variables
+# Factor categorical variables
 # Factor treatment and subject
 BPRS$treatment <- factor(BPRS$treatment)
 BPRS$subject <- factor(BPRS$subject)
@@ -53,7 +56,7 @@ RATSL <- RATS %>%
 # Glimpse the data
 glimpse(RATS)
 
-# Now, take a SERIOUS LOOK at the data
+# Now, take another SERIOUS LOOK at the data
 
 str(BPRS)
 str(BPRSL)
@@ -65,9 +68,9 @@ str(RATSL)
 View(RATS)
 View(RATSL)
 
-# Long and wide forms look different, alright.
+# Long and wide forms look different, alright. Lesson learned :-)
 
-# Finally, write the csvs
+# Finally, write and save the csvs
 write.csv(RATSL, file = "RATSL.csv") 
 
 write.csv(BPRSL, file = "BPRSL.csv") 
